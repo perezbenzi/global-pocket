@@ -1,9 +1,9 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Account } from "@/types";
-import { Edit, Trash, PiggyBank } from "lucide-react";
+import { Edit, Trash2, PiggyBank } from "lucide-react";
 
 interface AccountCardProps {
   account: Account;
@@ -13,17 +13,19 @@ interface AccountCardProps {
 
 const AccountCard = ({ account, onEdit, onDelete }: AccountCardProps) => {
   return (
-    <Card className="mb-3">
+    <Card className="mb-3 overflow-hidden border border-border/30 bg-card/60 backdrop-blur-sm">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <PiggyBank className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">{account.name}</CardTitle>
+          <div className="bg-primary/20 p-1.5 rounded-md">
+            <PiggyBank className="h-5 w-5 text-primary" />
+          </div>
+          <h3 className="text-lg font-medium">{account.name}</h3>
         </div>
-        <div className="flex space-x-1">
+        <div className="flex gap-1">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 w-8 p-0" 
+            className="h-8 w-8 p-0 rounded-full hover:bg-primary/20" 
             onClick={() => onEdit(account)}
           >
             <Edit className="h-4 w-4" />
@@ -32,16 +34,18 @@ const AccountCard = ({ account, onEdit, onDelete }: AccountCardProps) => {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 w-8 p-0 text-destructive" 
+            className="h-8 w-8 p-0 rounded-full hover:bg-destructive/20 text-destructive" 
             onClick={() => onDelete(account.id)}
           >
-            <Trash className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
             <span className="sr-only">Eliminar</span>
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-xl font-semibold text-right">${account.balance.toFixed(2)}</p>
+      <CardContent className="pt-0">
+        <div className="mt-1 bg-secondary/40 p-3 rounded-md">
+          <p className="text-xl font-semibold text-right text-primary">${account.balance.toFixed(2)}</p>
+        </div>
       </CardContent>
     </Card>
   );

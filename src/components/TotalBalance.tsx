@@ -4,7 +4,7 @@ import { Account, Debt } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Minus, ArrowRight } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -53,22 +53,22 @@ const TotalBalance = ({ accounts, debts }: TotalBalanceProps) => {
   };
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 border border-border/30 bg-card/60 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-medium">Balance Total (USD)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-secondary/50 p-3 rounded-lg">
+          <div className="bg-secondary/40 p-3 rounded-lg backdrop-blur-sm">
             <p className="text-sm text-muted-foreground">Total Cuentas</p>
-            <p className="text-xl font-medium">${totalBalance.toFixed(2)}</p>
+            <p className="text-xl font-medium text-primary">${totalBalance.toFixed(2)}</p>
           </div>
-          <div className="bg-secondary/50 p-3 rounded-lg">
+          <div className="bg-secondary/40 p-3 rounded-lg backdrop-blur-sm">
             <p className="text-sm text-muted-foreground">Total Deudas</p>
             <p className="text-xl font-medium text-destructive">${totalDebt.toFixed(2)}</p>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t">
+        <div className="mt-4 pt-4 border-t border-border/30">
           <p className="text-sm text-muted-foreground">Balance Neto</p>
           <p className={`text-2xl font-bold ${netBalance >= 0 ? 'text-primary' : 'text-destructive'}`}>
             ${netBalance.toFixed(2)}
@@ -76,7 +76,7 @@ const TotalBalance = ({ accounts, debts }: TotalBalanceProps) => {
         </div>
         
         {accounts.length > 0 && (
-          <div className="mt-4 pt-4 border-t">
+          <div className="mt-4 pt-4 border-t border-border/30">
             <p className="text-sm text-muted-foreground mb-2">Actualización Rápida</p>
             <div className="grid grid-cols-2 gap-2">
               {accounts.map(account => (
@@ -84,11 +84,11 @@ const TotalBalance = ({ accounts, debts }: TotalBalanceProps) => {
                   <SheetTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start text-left truncate"
+                      className="w-full justify-start text-left truncate bg-secondary/30 border-border/50"
                       onClick={() => setSelectedAccount(account)}
                     >
                       {account.name}
-                      <span className="ml-auto">${account.balance.toFixed(2)}</span>
+                      <span className="ml-auto font-medium">${account.balance.toFixed(2)}</span>
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="bottom" className="h-auto pb-10">
