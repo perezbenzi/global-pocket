@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ const AccountCard = ({ account, onEdit, onDelete }: AccountCardProps) => {
             onClick={() => onEdit(account)}
           >
             <Edit className="h-4 w-4" />
-            <span className="sr-only">Editar</span>
+            <span className="sr-only">Edit</span>
           </Button>
           <Button 
             variant="ghost" 
@@ -38,7 +37,7 @@ const AccountCard = ({ account, onEdit, onDelete }: AccountCardProps) => {
             onClick={() => onDelete(account.id)}
           >
             <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Eliminar</span>
+            <span className="sr-only">Delete</span>
           </Button>
         </div>
       </CardHeader>

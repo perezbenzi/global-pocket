@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,6 @@ const AddAccountForm = ({ onAddAccount, onUpdateAccount, account }: AddAccountFo
       });
     }
     
-    // Reset form
     setName("");
     setBalance("");
     setOpen(false);
@@ -55,19 +53,19 @@ const AddAccountForm = ({ onAddAccount, onUpdateAccount, account }: AddAccountFo
       <DialogTrigger asChild>
         <Button className="w-full flex gap-2 items-center">
           <Plus size={16} />
-          {isEditing ? "Editar Cuenta" : "Agregar Cuenta"}
+          {isEditing ? "Edit Account" : "Add Account"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Cuenta" : "Agregar Nueva Cuenta"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Account" : "Add New Account"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Nombre de la Cuenta</Label>
+            <Label htmlFor="name">Account Name</Label>
             <Input
               id="name"
-              placeholder="Banco, Efectivo, etc."
+              placeholder="Bank, Cash, etc."
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -86,7 +84,7 @@ const AddAccountForm = ({ onAddAccount, onUpdateAccount, account }: AddAccountFo
             />
           </div>
           <Button type="submit" className="w-full mt-2">
-            {isEditing ? "Actualizar" : "Agregar"} Cuenta
+            {isEditing ? "Update" : "Add"} Account
           </Button>
         </form>
       </DialogContent>

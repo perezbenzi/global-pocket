@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ interface DebtCardProps {
 }
 
 const DebtCard = ({ debt, accounts, onEdit, onDelete }: DebtCardProps) => {
-  const accountName = accounts.find(a => a.id === debt.accountId)?.name || "Cuenta desconocida";
+  const accountName = accounts.find(a => a.id === debt.accountId)?.name || "Unknown account";
 
   return (
     <Card className="mb-3 overflow-hidden border border-destructive/30 bg-card/60 backdrop-blur-sm">
@@ -32,7 +31,7 @@ const DebtCard = ({ debt, accounts, onEdit, onDelete }: DebtCardProps) => {
             onClick={() => onEdit(debt)}
           >
             <Edit className="h-4 w-4" />
-            <span className="sr-only">Editar</span>
+            <span className="sr-only">Edit</span>
           </Button>
           <Button 
             variant="ghost" 
@@ -41,12 +40,12 @@ const DebtCard = ({ debt, accounts, onEdit, onDelete }: DebtCardProps) => {
             onClick={() => onDelete(debt.id)}
           >
             <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Eliminar</span>
+            <span className="sr-only">Delete</span>
           </Button>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <p className="text-sm text-muted-foreground mb-1">Asociada a: {accountName}</p>
+        <p className="text-sm text-muted-foreground mb-1">Associated with: {accountName}</p>
         <div className="mt-1 bg-secondary/40 p-3 rounded-md">
           <p className="text-xl font-semibold text-right text-destructive">-${debt.amount.toFixed(2)}</p>
         </div>
