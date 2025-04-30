@@ -11,3 +11,9 @@ export interface Debt {
   amount: number;
   accountId: string;
 }
+
+export interface QuickEditAction {
+  accountId: string;
+  amount: number;
+  operation: 'add' | 'subtract';
+}
