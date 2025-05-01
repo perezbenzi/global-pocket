@@ -1,9 +1,10 @@
-import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, query, where, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, query, where, writeBatch, orderBy, limit } from "firebase/firestore";
 import { db } from "./firebase";
-import { Account, Debt } from "@/types";
+import { Account, Debt, Transaction } from "@/types";
 
 const ACCOUNTS_COLLECTION = 'accounts';
 const DEBTS_COLLECTION = 'debts';
+const TRANSACTIONS_COLLECTION = 'transactions';
 
 function getUserCollection(userId: string, collectionName: string) {
   return collection(db, 'users', userId, collectionName);
@@ -82,6 +83,93 @@ export async function deleteDebt(userId: string, debtId: string): Promise<void> 
   await deleteDoc(doc(getUserCollection(userId, DEBTS_COLLECTION), debtId));
 }
 
+export async function addTransaction(userId: string, transaction: Omit<Transaction, "id">): Promise<Transaction> {
+  const transactionsRef = getUserCollection(userId, TRANSACTIONS_COLLECTION);
+  const newDocRef = doc(transactionsRef);
+  
+  await setDoc(newDocRef, {
+    ...transaction,
+    date: transaction.date || new Date().toISOString()
+  });
+  
+  return {
+    id: newDocRef.id,
+    ...transaction
+  };
+}
+
+export async function getTransactions(userId: string, maxResults = 50): Promise<Transaction[]> {
+  const transactionsRef = getUserCollection(userId, TRANSACTIONS_COLLECTION);
+  const q = query(
+    transactionsRef,
+    orderBy("date", "desc"),
+    limit(maxResults)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  } as Transaction));
+}
+
+export async function updateAccountWithTransaction(
+  userId: string, 
+  accountId: string, 
+  amount: number, 
+  type: 'deposit' | 'withdrawal',
+  description?: string
+): Promise<{ updatedAccount: Account, transaction: Transaction }> {
+  // Get the account
+  const accountRef = doc(getUserCollection(userId, ACCOUNTS_COLLECTION), accountId);
+  const accountDoc = await getDoc(accountRef);
+  
+  if (!accountDoc.exists()) {
+    throw new Error('Account not found');
+  }
+  
+  const account = { id: accountDoc.id, ...accountDoc.data() } as Account;
+  const updatedAccount = { ...account };
+  
+  // Update balance
+  if (type === 'deposit') {
+    updatedAccount.balance += amount;
+  } else {
+    updatedAccount.balance -= amount;
+  }
+  
+  // Create transaction object
+  const transaction: Omit<Transaction, "id"> = {
+    accountId,
+    accountName: account.name,
+    amount,
+    type,
+    date: new Date().toISOString(),
+    description
+  };
+  
+  // Create batch to update both account and add transaction
+  const batch = writeBatch(db);
+  
+  // Update account
+  const { id, ...accountData } = updatedAccount;
+  batch.set(accountRef, accountData);
+  
+  // Add transaction
+  const transactionsRef = getUserCollection(userId, TRANSACTIONS_COLLECTION);
+  const newTransactionRef = doc(transactionsRef);
+  batch.set(newTransactionRef, transaction);
+  
+  // Commit the batch
+  await batch.commit();
+  
+  return { 
+    updatedAccount, 
+    transaction: { id: newTransactionRef.id, ...transaction } 
+  };
+}
+
 export async function migrateLocalDataToFirestore(user: { uid: string }): Promise<void> {
   const accountsJson = localStorage.getItem('accounts');
   const debtsJson = localStorage.getItem('debts');
@@ -125,4 +213,8 @@ export async function migrateLocalDataToFirestore(user: { uid: string }): Promis
   });
   
   await batch.commit();
+}
+
+export async function deleteTransaction(userId: string, transactionId: string): Promise<void> {
+  await deleteDoc(doc(getUserCollection(userId, TRANSACTIONS_COLLECTION), transactionId));
 } 

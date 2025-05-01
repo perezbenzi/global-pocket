@@ -7,15 +7,15 @@ import { Plus, Minus } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
-import { updateAccount } from "@/lib/db";
 
 interface TotalBalanceProps {
   accounts: Account[];
   debts: Debt[];
   onAccountUpdate?: (updatedAccount: Account) => void;
+  onQuickUpdate?: (accountId: string, amount: number, type: 'deposit' | 'withdrawal', description?: string) => void;
 }
 
-const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) => {
+const TotalBalance = ({ accounts, debts, onAccountUpdate, onQuickUpdate }: TotalBalanceProps) => {
   const { user } = useAuth();
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
   const totalDebt = debts.reduce((sum, debt) => sum + debt.amount, 0);
@@ -31,7 +31,7 @@ const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) =
   };
 
   const saveQuickEdit = async (operation: 'add' | 'subtract') => {
-    if (!user || !selectedAccount || !quickEditAmount || isNaN(parseFloat(quickEditAmount))) {
+    if (!user || !selectedAccount || !quickEditAmount || isNaN(parseFloat(quickEditAmount)) || !onQuickUpdate) {
       toast.error("Please enter a valid amount");
       return;
     }
@@ -40,24 +40,17 @@ const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) =
     
     try {
       const amount = parseFloat(quickEditAmount);
-      const updatedAccount = {...selectedAccount};
       
-      if (operation === 'add') {
-        updatedAccount.balance += amount;
-      } else {
-        updatedAccount.balance -= amount;
-      }
-      
-      await updateAccount(user.uid, updatedAccount);
-      
-      toast.success(`$${amount.toFixed(2)} ${operation === 'add' ? 'added to' : 'subtracted from'} ${selectedAccount.name}`);
+      await onQuickUpdate(
+        selectedAccount.id, 
+        amount, 
+        operation === 'add' ? 'deposit' : 'withdrawal',
+        `Quick ${operation === 'add' ? 'deposit' : 'withdrawal'} from dashboard`
+      );
       
       setSelectedAccount(null);
       setQuickEditAmount("");
       
-      if (onAccountUpdate) {
-        onAccountUpdate(updatedAccount);
-      }
     } catch (error) {
       console.error("Error updating account:", error);
       toast.error("Error updating account");
@@ -69,36 +62,37 @@ const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) =
   return (
     <Card className="mb-6 border border-border/30 bg-card/60 backdrop-blur-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">Total Balance (USD)</CardTitle>
+        <CardTitle className="text-lg font-medium md:text-xl">Total Balance (USD)</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-secondary/40 p-3 rounded-lg backdrop-blur-sm">
-            <p className="text-sm">Total Accounts</p>
-            <p className="text-xl font-medium text-primary">${totalBalance.toFixed(2)}</p>
+        <div className="grid grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+          <div className="bg-secondary/40 p-3 md:p-4 rounded-lg backdrop-blur-sm">
+            <p className="text-sm md:text-base">Total Accounts</p>
+            <p className="text-xl md:text-2xl font-medium text-primary">${totalBalance.toFixed(2)}</p>
           </div>
-          <div className="bg-secondary/40 p-3 rounded-lg backdrop-blur-sm">
-            <p className="text-sm">Total Debts</p>
-            <p className="text-xl font-medium text-foreground">${totalDebt.toFixed(2)}</p>
+          <div className="bg-secondary/40 p-3 md:p-4 rounded-lg backdrop-blur-sm">
+            <p className="text-sm md:text-base">Total Debts</p>
+            <p className="text-xl md:text-2xl font-medium text-foreground">${totalDebt.toFixed(2)}</p>
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-border/30">
-          <p className="text-sm">Net Balance</p>
-          <p className={`text-2xl font-bold ${netBalance >= 0 ? 'text-primary' : 'text-foreground'}`}>
+          <p className="text-sm md:text-base">Net Balance</p>
+          <p className={`text-2xl md:text-3xl font-bold ${netBalance >= 0 ? 'text-primary' : 'text-foreground'}`}>
             ${netBalance.toFixed(2)}
           </p>
         </div>
         
         {accounts.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border/30">
-            <p className="text-sm mb-2">Quick Update</p>
-            <div className="grid grid-cols-2 gap-2">
+            <p className="text-sm md:text-base mb-2">Quick Update</p>
+            <div style={styles.container}>
               {accounts.map(account => (
                 <Sheet key={account.id}>
                   <SheetTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start text-left truncate bg-secondary/30 border-border/50"
+                      style={styles.button}
+                      className="justify-start text-left truncate bg-secondary/30 border-border/50"
                       onClick={() => handleQuickEdit(account)}
                     >
                       {account.name}
@@ -110,7 +104,7 @@ const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) =
                       <SheetTitle>Update {account.name}</SheetTitle>
                       <SheetDescription>Current balance: ${account.balance.toFixed(2)}</SheetDescription>
                     </SheetHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 max-w-md mx-auto">
                       <Input
                         type="number"
                         step="0.01"
@@ -120,10 +114,11 @@ const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) =
                         className="text-lg"
                         disabled={isSubmitting}
                       />
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="flex justify-center space-x-6">
                         <Button 
                           onClick={() => saveQuickEdit('add')} 
-                          className="flex gap-2 items-center"
+                          className="inline-flex gap-2 items-center px-6"
+                          size="lg"
                           disabled={isSubmitting}
                         >
                           <Plus size={16} />
@@ -132,7 +127,8 @@ const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) =
                         <Button 
                           onClick={() => saveQuickEdit('subtract')} 
                           variant="outline"
-                          className="flex gap-2 items-center"
+                          className="inline-flex gap-2 items-center px-6"
+                          size="lg"
                           disabled={isSubmitting}
                         >
                           <Minus size={16} />
@@ -149,6 +145,21 @@ const TotalBalance = ({ accounts, debts, onAccountUpdate }: TotalBalanceProps) =
       </CardContent>
     </Card>
   );
+};
+
+const styles = {
+  container: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: '8px',
+    transition: 'all 0.3s ease',
+    width: '100%'
+  },
+  button: {
+    width: '100%',
+    transition: 'all 0.3s ease',
+    minHeight: '44px'
+  }
 };
 
 export default TotalBalance;

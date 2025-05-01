@@ -15,7 +15,7 @@ const Header = () => {
 
   return (
     <header className="bg-primary shadow-md px-6 py-4 sticky top-0 z-10">
-      <div className="container max-w-md mx-auto flex justify-between items-center">
+      <div className="container mx-auto flex justify-between items-center max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
         <h1 className="text-xl font-bold text-primary-foreground">
           Global Pocket
         </h1>

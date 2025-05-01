@@ -9,8 +9,9 @@ import AddAccountForm from "@/components/AddAccountForm";
 import AddDebtForm from "@/components/AddDebtForm";
 import { toast } from "@/lib/toast";
 import { useAuth } from "@/hooks/useAuth";
-import { getAccounts, getDebts, addAccount, updateAccount, deleteAccount, addDebt, updateDebt, deleteDebt } from "@/lib/db";
+import { getAccounts, getDebts, addAccount, updateAccount, deleteAccount, addDebt, updateDebt, deleteDebt, updateAccountWithTransaction } from "@/lib/db";
 import { Skeleton } from "@/components/ui/skeleton";
+import Navbar from "@/components/Navbar";
 
 const Index = () => {
   const { user } = useAuth();
@@ -145,11 +146,34 @@ const Index = () => {
     ));
   };
 
+  const handleQuickUpdate = async (accountId: string, amount: number, type: 'deposit' | 'withdrawal', description?: string) => {
+    if (!user) return;
+    
+    try {
+      const { updatedAccount } = await updateAccountWithTransaction(
+        user.uid,
+        accountId,
+        amount,
+        type,
+        description
+      );
+      
+      setAccounts(accounts.map(acc => 
+        acc.id === updatedAccount.id ? updatedAccount : acc
+      ));
+      
+      toast.success(`${type === 'deposit' ? 'Added' : 'Subtracted'} $${amount.toFixed(2)} ${type === 'deposit' ? 'to' : 'from'} account`);
+    } catch (error) {
+      console.error("Error updating account:", error);
+      toast.error("Error updating account");
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container max-w-md mx-auto p-4 pb-16">
+      <div className="min-h-screen bg-background pb-16 md:pb-0 md:pt-16">
+        <Navbar /> 
+        <main className="container mx-auto p-4 pb-16 max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
           <Skeleton className="h-40 w-full mb-6" />
           <div className="flex mb-4">
             <Skeleton className="h-10 w-full" />
@@ -165,14 +189,15 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background pb-16 md:pb-0 md:pt-16">
+      <Navbar />
       
-      <main className="container max-w-md mx-auto p-4 pb-16">
+      <main className="container mx-auto p-4 pb-16 max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
         <TotalBalance 
           accounts={accounts} 
           debts={debts}
           onAccountUpdate={handleAccountUpdated}
+          onQuickUpdate={handleQuickUpdate}
         />
         
         <Tabs defaultValue="accounts" className="w-full">
@@ -190,18 +215,19 @@ const Index = () => {
               />
             </div>
             
-            <div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {accounts.length > 0 ? (
                 accounts.map((account) => (
                   <AccountCard
                     key={account.id}
                     account={account}
                     onEdit={(acc) => setAccountToEdit(acc)}
+                    onUpdate={handleUpdateAccount}
                     onDelete={handleDeleteAccount}
                   />
                 ))
               ) : (
-                <div className="text-center p-6 bg-muted rounded-md">
+                <div className="text-center p-6 bg-muted rounded-md md:col-span-2 lg:col-span-3">
                   <p className="text-muted-foreground">You don't have any accounts yet.</p>
                   <p className="text-sm mt-2">Add your first account to get started.</p>
                 </div>
@@ -219,7 +245,7 @@ const Index = () => {
               />
             </div>
             
-            <div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {debts.length > 0 ? (
                 debts.map((debt) => (
                   <DebtCard
@@ -231,7 +257,7 @@ const Index = () => {
                   />
                 ))
               ) : (
-                <div className="text-center p-6 bg-muted rounded-md">
+                <div className="text-center p-6 bg-muted rounded-md md:col-span-2 lg:col-span-3">
                   <p className="text-muted-foreground">You don't have any debts registered.</p>
                   <p className="text-sm mt-2">Great! Or you can add one if needed.</p>
                 </div>

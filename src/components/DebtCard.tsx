@@ -45,7 +45,7 @@ const DebtCard = ({ debt, accounts, onEdit, onDelete }: DebtCardProps) => {
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <p className="text-sm text-muted-foreground mb-1">Associated with: {accountName}</p>
+        <p className="text-sm mb-1">Associated with: {accountName}</p>
         <div className="mt-1 bg-secondary/40 p-3 rounded-md">
           <p className="text-xl font-semibold text-right text-destructive">-${debt.amount.toFixed(2)}</p>
         </div>
