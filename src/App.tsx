@@ -12,6 +12,7 @@ import {
 } from 'react-router-dom';
 import Index from './pages/Index';
 import Transactions from './pages/Transactions';
+import DollarRate from './pages/DollarRate';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -46,6 +47,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Transactions />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dollar"
+              element={
+                <ProtectedRoute>
+                  <DollarRate />
                 </ProtectedRoute>
               }
             />
