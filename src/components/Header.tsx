@@ -1,6 +1,6 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -9,7 +9,7 @@ const Header = () => {
     try {
       await logout();
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error('Error logging out:', error);
     }
   };
 
@@ -20,9 +20,9 @@ const Header = () => {
           Global Pocket
         </h1>
         {user && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleLogout}
             className="bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
           >

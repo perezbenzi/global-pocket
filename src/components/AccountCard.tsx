@@ -1,10 +1,13 @@
-import React from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Account } from "@/types";
-import { Edit, Trash2, PiggyBank } from "lucide-react";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import AddAccountForm from "./AddAccountForm";
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Account } from '@/types';
+import { Edit, Trash2, PiggyBank } from 'lucide-react';
+import AddAccountForm from './AddAccountForm';
 
 interface AccountCardProps {
   account: Account;
@@ -13,7 +16,12 @@ interface AccountCardProps {
   onDelete: (id: string) => void;
 }
 
-const AccountCard = ({ account, onEdit, onUpdate, onDelete }: AccountCardProps) => {
+const AccountCard = ({
+  account,
+  onEdit,
+  onUpdate,
+  onDelete,
+}: AccountCardProps) => {
   return (
     <Card className="mb-3 overflow-hidden border border-border/30 bg-card/60 backdrop-blur-sm">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -21,40 +29,31 @@ const AccountCard = ({ account, onEdit, onUpdate, onDelete }: AccountCardProps) 
           <div className="bg-primary/20 p-1.5 rounded-md">
             <PiggyBank className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-medium">{account.name}</h3>
+          <h3 className="text-lg font-medium">
+            {account.name}
+          </h3>
         </div>
         <div className="flex gap-1">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0 rounded-full hover:bg-primary/20" 
-                onClick={() => onEdit(account)}
+          <AddAccountForm
+            trigger={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 rounded-full hover:bg-primary/20"
               >
                 <Edit className="h-4 w-4" />
                 <span className="sr-only">Edit</span>
               </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Edit Account</SheetTitle>
-                <SheetDescription>Make changes to your account here.</SheetDescription>
-              </SheetHeader>
-              <div className="py-4">
-                <AddAccountForm 
-                  onAddAccount={() => {}} 
-                  onUpdateAccount={onUpdate}
-                  account={account}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 w-8 p-0 rounded-full hover:bg-destructive/20 text-destructive" 
+            }
+            onAddAccount={() => {}}
+            onUpdateAccount={onUpdate}
+            account={account}
+          />
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 rounded-full hover:bg-destructive/20 text-destructive"
             onClick={() => onDelete(account.id)}
           >
             <Trash2 className="h-4 w-4" />
@@ -64,7 +63,9 @@ const AccountCard = ({ account, onEdit, onUpdate, onDelete }: AccountCardProps) 
       </CardHeader>
       <CardContent className="pt-0">
         <div className="mt-1 bg-secondary/40 p-3 rounded-md">
-          <p className="text-xl font-semibold text-right text-primary">${account.balance.toFixed(2)}</p>
+          <p className="text-xl font-semibold text-right text-primary">
+            ${account.balance.toFixed(2)}
+          </p>
         </div>
       </CardContent>
     </Card>
