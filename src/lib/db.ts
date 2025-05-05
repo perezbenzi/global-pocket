@@ -12,11 +12,17 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Account, Debt, Transaction } from '@/types';
+import {
+  Account,
+  Debt,
+  Transaction,
+  MonthlyExpense,
+} from '@/types';
 
 const ACCOUNTS_COLLECTION = 'accounts';
 const DEBTS_COLLECTION = 'debts';
 const TRANSACTIONS_COLLECTION = 'transactions';
+const MONTHLY_EXPENSES_COLLECTION = 'monthlyExpenses';
 
 function getUserCollection(
   userId: string,
@@ -335,6 +341,70 @@ export async function deleteTransaction(
     doc(
       getUserCollection(userId, TRANSACTIONS_COLLECTION),
       transactionId
+    )
+  );
+}
+
+export async function getMonthlyExpenses(
+  userId: string
+): Promise<MonthlyExpense[]> {
+  const expensesRef = getUserCollection(
+    userId,
+    MONTHLY_EXPENSES_COLLECTION
+  );
+  const q = query(expensesRef, orderBy('date', 'desc'));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(
+    doc =>
+      ({
+        id: doc.id,
+        ...doc.data(),
+      }) as MonthlyExpense
+  );
+}
+
+export async function addMonthlyExpense(
+  userId: string,
+  expense: Omit<MonthlyExpense, 'id'>
+): Promise<string> {
+  const expensesRef = getUserCollection(
+    userId,
+    MONTHLY_EXPENSES_COLLECTION
+  );
+  const newDocRef = doc(expensesRef);
+  await setDoc(newDocRef, expense);
+  return newDocRef.id;
+}
+
+export async function updateMonthlyExpense(
+  userId: string,
+  expenseId: string,
+  expense: Omit<MonthlyExpense, 'id'>
+): Promise<void> {
+  await setDoc(
+    doc(
+      getUserCollection(
+        userId,
+        MONTHLY_EXPENSES_COLLECTION
+      ),
+      expenseId
+    ),
+    expense
+  );
+}
+
+export async function deleteMonthlyExpense(
+  userId: string,
+  expenseId: string
+): Promise<void> {
+  await deleteDoc(
+    doc(
+      getUserCollection(
+        userId,
+        MONTHLY_EXPENSES_COLLECTION
+      ),
+      expenseId
     )
   );
 }

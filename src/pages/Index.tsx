@@ -111,17 +111,6 @@ const Index = () => {
     if (!user) return;
 
     try {
-      const hasDebts = debts.some(
-        debt => debt.accountId === id
-      );
-
-      if (hasDebts) {
-        toast.error(
-          'Cannot delete an account with associated debts'
-        );
-        return;
-      }
-
       await deleteAccount(user.uid, id);
       setAccounts(
         accounts.filter(account => account.id !== id)
@@ -297,7 +286,6 @@ const Index = () => {
         <TabsContent value="debts" className="space-y-4">
           <div className="mb-4">
             <AddDebtForm
-              accounts={accounts}
               onAddDebt={handleAddDebt}
               onUpdateDebt={handleUpdateDebt}
               debt={debtToEdit}
@@ -310,8 +298,10 @@ const Index = () => {
                 <DebtCard
                   key={debt.id}
                   debt={debt}
-                  accounts={accounts}
-                  onEdit={d => setDebtToEdit(d)}
+                  onEdit={debt => {
+                    console.log('Editing debt:', debt);
+                    handleUpdateDebt(debt);
+                  }}
                   onDelete={handleDeleteDebt}
                 />
               ))

@@ -5,26 +5,21 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Account, Debt } from '@/types';
-import { Edit, Trash2, Wallet } from 'lucide-react';
+import { Debt } from '@/types';
+import { Trash2, Wallet } from 'lucide-react';
+import EditDebtForm from './EditDebtForm';
 
 interface DebtCardProps {
   debt: Debt;
-  accounts: Account[];
   onEdit: (debt: Debt) => void;
   onDelete: (id: string) => void;
 }
 
 const DebtCard = ({
   debt,
-  accounts,
   onEdit,
   onDelete,
 }: DebtCardProps) => {
-  const accountName =
-    accounts.find(a => a.id === debt.accountId)?.name ||
-    'Unknown account';
-
   return (
     <Card className="mb-3 overflow-hidden border border-destructive/30 bg-card/60 backdrop-blur-sm">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -37,15 +32,7 @@ const DebtCard = ({
           </h3>
         </div>
         <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 rounded-full hover:bg-primary/20"
-            onClick={() => onEdit(debt)}
-          >
-            <Edit className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
+          <EditDebtForm debt={debt} onEdit={onEdit} />
           <Button
             variant="ghost"
             size="sm"
@@ -58,9 +45,6 @@ const DebtCard = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <p className="text-sm mb-1">
-          Associated with: {accountName}
-        </p>
         <div className="mt-1 bg-secondary/40 p-3 rounded-md">
           <p className="text-xl font-semibold text-right text-destructive">
             -${debt.amount.toFixed(2)}

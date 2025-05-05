@@ -8,6 +8,8 @@ import {
   Menu,
   X,
   DollarSign,
+  Receipt,
+  Bitcoin,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -54,6 +56,23 @@ const Navbar = () => {
               </Button>
             </Link>
             <Link
+              to="/monthly-expenses"
+              className="flex items-center gap-2"
+            >
+              <Button
+                variant={
+                  isActive('/monthly-expenses')
+                    ? 'ghost'
+                    : 'ghost'
+                }
+                size="sm"
+                className={`flex gap-2 items-center hover:bg-primary-foreground/20 ${isActive('/monthly-expenses') ? 'bg-primary-foreground/20' : ''}`}
+              >
+                <Receipt size={18} />
+                <span>Monthly Expenses</span>
+              </Button>
+            </Link>
+            <Link
               to="/dollar"
               className="flex items-center gap-2"
             >
@@ -66,6 +85,21 @@ const Navbar = () => {
               >
                 <DollarSign size={18} />
                 <span>Dollar Rate</span>
+              </Button>
+            </Link>
+            <Link
+              to="/crypto"
+              className="flex items-center gap-2"
+            >
+              <Button
+                variant={
+                  isActive('/crypto') ? 'ghost' : 'ghost'
+                }
+                size="sm"
+                className={`flex gap-2 items-center hover:bg-primary-foreground/20 ${isActive('/crypto') ? 'bg-primary-foreground/20' : ''}`}
+              >
+                <Bitcoin size={18} />
+                <span>Crypto</span>
               </Button>
             </Link>
             <Button
@@ -122,12 +156,28 @@ const Navbar = () => {
                 <span>Transactions</span>
               </Link>
               <Link
+                to="/monthly-expenses"
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-2 p-2 rounded-md hover:bg-primary-foreground/20 ${isActive('/monthly-expenses') ? 'bg-primary-foreground/20' : ''}`}
+              >
+                <Receipt size={18} />
+                <span>Monthly Expenses</span>
+              </Link>
+              <Link
                 to="/dollar"
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-2 p-2 rounded-md hover:bg-primary-foreground/20 ${isActive('/dollar') ? 'bg-primary-foreground/20' : ''}`}
               >
                 <DollarSign size={18} />
                 <span>Dollar Rate</span>
+              </Link>
+              <Link
+                to="/crypto"
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-2 p-2 rounded-md hover:bg-primary-foreground/20 ${isActive('/crypto') ? 'bg-primary-foreground/20' : ''}`}
+              >
+                <Bitcoin size={18} />
+                <span>Crypto</span>
               </Link>
               <button
                 onClick={() => {

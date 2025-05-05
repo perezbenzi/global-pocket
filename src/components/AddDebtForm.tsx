@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+  ReactElement,
+} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,73 +13,56 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Plus } from 'lucide-react';
-import { Account, Debt } from '@/types';
+import { Debt } from '@/types';
 import { toast } from '@/lib/toast';
 
 interface AddDebtFormProps {
-  accounts: Account[];
   onAddDebt: (debt: Omit<Debt, 'id'>) => void;
   onUpdateDebt?: (debt: Debt) => void;
   debt?: Debt;
+  trigger?: ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const AddDebtForm = ({
-  accounts,
   onAddDebt,
   onUpdateDebt,
   debt,
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: AddDebtFormProps) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
-  const [accountId, setAccountId] = useState('');
   const isEditing = Boolean(debt);
 
-  const hasAccounts = accounts && accounts.length > 0;
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const onOpenChange = isControlled
+    ? controlledOnOpenChange
+    : setInternalOpen;
+
+  const defaultTrigger = (
+    <Button className="w-full flex gap-2 items-center">
+      <Plus size={16} />
+      {isEditing ? 'Edit Debt' : 'Add Debt'}
+    </Button>
+  );
 
   useEffect(() => {
-    if (debt) {
+    if (open && debt) {
       setName(debt.name);
       setAmount(debt.amount.toString());
-      setAccountId(debt.accountId);
     }
-  }, [debt]);
-
-  useEffect(() => {
-    if (
-      hasAccounts &&
-      !isEditing &&
-      !accountId &&
-      accounts.length > 0 &&
-      open
-    ) {
-      setAccountId(accounts[0].id);
-    }
-  }, [hasAccounts, isEditing, accountId, accounts, open]);
+  }, [debt, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('Form submitted', {
-      name,
-      amount,
-      accountId,
-    });
-
-    if (!name || !amount || !accountId) {
-      console.log('Validation failed', {
-        name,
-        amount,
-        accountId,
-      });
+    if (!name || !amount) {
       toast.error('Please complete all fields');
       return;
     }
@@ -85,48 +72,34 @@ const AddDebtForm = ({
         ...debt,
         name,
         amount: parseFloat(amount),
-        accountId,
       });
     } else {
       onAddDebt({
         name,
         amount: parseFloat(amount),
-        accountId,
       });
     }
 
     setName('');
     setAmount('');
-    setAccountId('');
-    setOpen(false);
+    if (onOpenChange) onOpenChange(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!hasAccounts && newOpen) {
-      toast.error('You need to add an account first');
-      return;
+    if (onOpenChange) onOpenChange(newOpen);
+    if (!newOpen) {
+      setName('');
+      setAmount('');
+    } else if (debt) {
+      setName(debt.name);
+      setAmount(debt.amount.toString());
     }
-    setOpen(newOpen);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full flex gap-2 items-center bg-primary/10 hover:bg-primary/20 text-foreground border-primary/30 shadow-sm"
-          onClick={() => {
-            if (!hasAccounts) {
-              toast.error(
-                'You need to add an account first'
-              );
-            }
-          }}
-          disabled={!hasAccounts}
-        >
-          <Plus size={16} className="text-primary" />
-          {isEditing ? 'Edit Debt' : 'Add Debt'}
-        </Button>
+        {trigger || defaultTrigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -159,41 +132,6 @@ const AddDebtForm = ({
               onChange={e => setAmount(e.target.value)}
               required
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="account">
-              Associated Account
-            </Label>
-            <Select
-              value={accountId}
-              onValueChange={setAccountId}
-              required
-              defaultValue={
-                hasAccounts && accounts.length > 0
-                  ? accounts[0].id
-                  : undefined
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an account" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.length > 0 ? (
-                  accounts.map(account => (
-                    <SelectItem
-                      key={account.id}
-                      value={account.id}
-                    >
-                      {account.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="none" disabled>
-                    Add an account first
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
           </div>
           <Button type="submit" className="w-full mt-2">
             {isEditing ? 'Update' : 'Add'} Debt

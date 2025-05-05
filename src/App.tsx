@@ -13,6 +13,8 @@ import {
 import Index from './pages/Index';
 import Transactions from './pages/Transactions';
 import DollarRate from './pages/DollarRate';
+import CryptoRates from './pages/CryptoRates';
+import MonthlyExpenses from './pages/MonthlyExpenses';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -51,10 +53,26 @@ const App = () => (
               }
             />
             <Route
+              path="/monthly-expenses"
+              element={
+                <ProtectedRoute>
+                  <MonthlyExpenses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/dollar"
               element={
                 <ProtectedRoute>
                   <DollarRate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crypto"
+              element={
+                <ProtectedRoute>
+                  <CryptoRates />
                 </ProtectedRoute>
               }
             />
