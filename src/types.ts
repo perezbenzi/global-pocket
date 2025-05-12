@@ -8,14 +8,7 @@ export interface Debt {
   id: string;
   name: string;
   amount: number;
-}
-
-export interface MonthlyExpense {
-  id: string;
-  description: string;
-  amount: number;
-  date: string;
-  isPaid: boolean;
+  accountId: string;
 }
 
 export interface QuickEditAction {

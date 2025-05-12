@@ -174,26 +174,23 @@ const TotalBalance = ({
                     {selectedAccount?.balance.toFixed(2)}
                   </DialogDescription>
                 </DialogHeader>
-                <form className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Amount</Label>
-                    <Input
-                      id="name"
-                      type="number"
-                      step="0.01"
-                      value={quickEditAmount}
-                      onChange={e =>
-                        setQuickEditAmount(e.target.value)
-                      }
-                      placeholder="Amount"
-                      className="text-lg"
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                <div className="grid gap-2 pb-4">
+                  <Label htmlFor="name">Amount</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={quickEditAmount}
+                    onChange={e =>
+                      setQuickEditAmount(e.target.value)
+                    }
+                    placeholder="Amount"
+                    className="text-lg"
+                    disabled={isSubmitting}
+                  />
                   <div className="flex justify-center space-x-6">
                     <Button
                       onClick={() => saveQuickEdit('add')}
-                      className="w-full"
+                      className="w-full mt-2"
                       disabled={isSubmitting}
                     >
                       <Plus size={16} />
@@ -204,14 +201,14 @@ const TotalBalance = ({
                         saveQuickEdit('subtract')
                       }
                       variant="outline"
-                      className="inline-flex items-center w-full"
+                      className="inline-flex items-center w-full mt-2"
                       disabled={isSubmitting}
                     >
                       <Minus size={16} />
                       Subtract
                     </Button>
                   </div>
-                </form>
+                </div>
               </DialogContent>
             </Dialog>
           </div>
