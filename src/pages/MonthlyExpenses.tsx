@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, DollarSign } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Check,
+  X,
+  ArrowUpDown,
+} from 'lucide-react';
 import { toast } from '@/lib/toast';
 import Layout from '@/components/Layout';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +45,15 @@ import {
   deleteMonthlyExpense,
 } from '@/lib/db';
 
+const formatNumber = (num: number): string => {
+  const numStr = Math.round(num).toString();
+  const parts = [];
+  for (let i = numStr.length; i > 0; i -= 3) {
+    parts.unshift(numStr.slice(Math.max(0, i - 3), i));
+  }
+  return parts.join('.');
+};
+
 interface MonthlyExpense {
   id: string;
   description: string;
@@ -45,26 +62,61 @@ interface MonthlyExpense {
   isPaid: boolean;
 }
 
+interface EditingExpense {
+  id: string;
+  description: string;
+  amount: string;
+}
+
 const MonthlyExpenses = () => {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<
     MonthlyExpense[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const [newExpense, setNewExpense] = useState({
+    description: '',
+    amount: '',
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] =
+    useState(false);
+  const [editingExpense, setEditingExpense] =
+    useState<EditingExpense | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: 'amount';
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   const totalExpenses = expenses.reduce(
     (sum, expense) => sum + expense.amount,
     0
   );
-  const totalPaidExpenses = expenses
-    .filter(expense => expense.isPaid)
-    .reduce((sum, expense) => sum + expense.amount, 0);
-  const totalPendingExpenses = expenses
-    .filter(expense => !expense.isPaid)
-    .reduce((sum, expense) => sum + expense.amount, 0);
+
+  const sortedExpenses = React.useMemo(() => {
+    if (!sortConfig) return expenses;
+
+    return [...expenses].sort((a, b) => {
+      if (sortConfig.key === 'amount') {
+        return sortConfig.direction === 'asc'
+          ? a.amount - b.amount
+          : b.amount - a.amount;
+      }
+      return 0;
+    });
+  }, [expenses, sortConfig]);
+
+  const requestSort = (key: 'amount') => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   useEffect(() => {
     const loadExpenses = async () => {
@@ -88,66 +140,37 @@ const MonthlyExpenses = () => {
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !description || !amount) {
+    if (
+      !user ||
+      !newExpense.description ||
+      !newExpense.amount
+    ) {
       toast.error('Please fill in all fields');
       return;
     }
 
     try {
-      const newExpense = {
-        description,
-        amount: parseFloat(amount),
+      const expense = {
+        description: newExpense.description,
+        amount: parseFloat(newExpense.amount),
         date: new Date().toISOString(),
         isPaid: false,
       };
 
       const expenseId = await addMonthlyExpense(
         user.uid,
-        newExpense
+        expense
       );
       setExpenses([
         ...expenses,
-        { ...newExpense, id: expenseId },
+        { ...expense, id: expenseId },
       ]);
-      setDescription('');
-      setAmount('');
+      setNewExpense({ description: '', amount: '' });
       setIsDialogOpen(false);
       toast.success('Expense added successfully');
     } catch (error) {
       console.error('Error adding expense:', error);
       toast.error('Error adding expense');
-    }
-  };
-
-  const handleTogglePaid = async (expenseId: string) => {
-    if (!user) return;
-
-    try {
-      const expense = expenses.find(
-        e => e.id === expenseId
-      );
-      if (!expense) return;
-
-      const updatedExpense = {
-        ...expense,
-        isPaid: !expense.isPaid,
-      };
-      await updateMonthlyExpense(
-        user.uid,
-        expenseId,
-        updatedExpense
-      );
-      setExpenses(
-        expenses.map(e =>
-          e.id === expenseId ? updatedExpense : e
-        )
-      );
-      toast.success(
-        `Expense marked as ${updatedExpense.isPaid ? 'paid' : 'pending'}`
-      );
-    } catch (error) {
-      console.error('Error updating expense:', error);
-      toast.error('Error updating expense');
     }
   };
 
@@ -164,6 +187,49 @@ const MonthlyExpenses = () => {
     }
   };
 
+  const handleEditStart = (expense: MonthlyExpense) => {
+    setEditingExpense({
+      id: expense.id,
+      description: expense.description,
+      amount: expense.amount.toString(),
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!user || !editingExpense) return;
+
+    try {
+      const expense = expenses.find(
+        e => e.id === editingExpense.id
+      );
+      if (!expense) return;
+
+      const updatedExpense = {
+        ...expense,
+        description: editingExpense.description,
+        amount: parseFloat(editingExpense.amount),
+      };
+
+      await updateMonthlyExpense(
+        user.uid,
+        editingExpense.id,
+        updatedExpense
+      );
+      setExpenses(
+        expenses.map(e =>
+          e.id === editingExpense.id ? updatedExpense : e
+        )
+      );
+      setIsEditDialogOpen(false);
+      setEditingExpense(null);
+      toast.success('Expense updated successfully');
+    } catch (error) {
+      console.error('Error updating expense:', error);
+      toast.error('Error updating expense');
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -171,19 +237,8 @@ const MonthlyExpenses = () => {
           <h1 className="text-2xl font-bold">
             Monthly Expenses
           </h1>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[1, 2, 3].map(i => (
-              <Card
-                key={i}
-                className="border border-border/30 bg-card/60 backdrop-blur-sm"
-              >
-                <CardContent className="p-6">
-                  <div className="h-24 flex items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-secondary border-t-primary rounded-full animate-spin"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="h-24 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-secondary border-t-primary rounded-full animate-spin"></div>
           </div>
         </div>
       </Layout>
@@ -222,9 +277,12 @@ const MonthlyExpenses = () => {
                   <Input
                     id="description"
                     placeholder="Rent, utilities, etc."
-                    value={description}
+                    value={newExpense.description}
                     onChange={e =>
-                      setDescription(e.target.value)
+                      setNewExpense({
+                        ...newExpense,
+                        description: e.target.value,
+                      })
                     }
                     required
                   />
@@ -238,9 +296,12 @@ const MonthlyExpenses = () => {
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    value={amount}
+                    value={newExpense.amount}
                     onChange={e =>
-                      setAmount(e.target.value)
+                      setNewExpense({
+                        ...newExpense,
+                        amount: e.target.value,
+                      })
                     }
                     required
                   />
@@ -256,177 +317,178 @@ const MonthlyExpenses = () => {
           </Dialog>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border border-border/30 bg-card/60 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">
-                Total Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mt-1 bg-secondary/40 p-3 rounded-md">
-                <p className="text-xl font-semibold text-right text-primary">
-                  ${totalExpenses.toFixed(2)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-border/30 bg-card/60 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">
-                Paid Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mt-1 bg-secondary/40 p-3 rounded-md">
-                <p className="text-xl font-semibold text-right text-green-500">
-                  ${totalPaidExpenses.toFixed(2)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-border/30 bg-card/60 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">
-                Pending Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mt-1 bg-secondary/40 p-3 rounded-md">
-                <p className="text-xl font-semibold text-right text-red-500">
-                  ${totalPendingExpenses.toFixed(2)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {expenses.map(expense => (
-            <Card
-              key={expense.id}
-              className={`border ${
-                expense.isPaid
-                  ? 'border-green-500/30'
-                  : 'border-red-500/30'
-              } bg-card/60 backdrop-blur-sm`}
-            >
-              <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`${
-                      expense.isPaid
-                        ? 'bg-green-500/10'
-                        : 'bg-red-500/10'
-                    } p-1.5 rounded-md`}
-                  >
-                    <DollarSign
-                      className={`h-5 w-5 ${
-                        expense.isPaid
-                          ? 'text-green-500'
-                          : 'text-red-500'
-                      }`}
-                    />
+        <div className="rounded-lg bg-card/60 backdrop-blur-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-border/50 bg-muted/50">
+                <TableHead className="font-semibold border-r border-border/30 w-1/2">
+                  Description
+                </TableHead>
+                <TableHead
+                  className="text-right font-semibold border-r border-border/30 w-1/2 cursor-pointer"
+                  onClick={() => requestSort('amount')}
+                >
+                  <div className="flex items-center justify-end gap-2">
+                    Amount
+                    <ArrowUpDown className="h-4 w-4" />
                   </div>
-                  <h3 className="text-lg font-medium">
-                    {expense.description}
-                  </h3>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`h-8 w-8 p-0 rounded-full ${
-                      expense.isPaid
-                        ? 'hover:bg-green-500/20 text-green-500'
-                        : 'hover:bg-red-500/20 text-red-500'
-                    }`}
-                    onClick={() =>
-                      handleTogglePaid(expense.id)
-                    }
-                  >
-                    <span className="sr-only">
-                      {expense.isPaid
-                        ? 'Mark as Unpaid'
-                        : 'Mark as Paid'}
-                    </span>
-                    <DollarSign className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 rounded-full hover:bg-destructive/20 text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          Delete
-                        </span>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Are you sure?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete this
-                          expense.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() =>
-                            handleDeleteExpense(expense.id)
-                          }
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                </TableHead>
+                <TableHead className="w-[80px] font-semibold">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedExpenses.map(expense => (
+                <TableRow
+                  key={expense.id}
+                  className="border-b border-border/30"
+                >
+                  <TableCell className="font-medium border-r border-border/30">
+                    <div
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() =>
+                        handleEditStart(expense)
+                      }
+                    >
+                      {expense.description}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-medium border-r border-border/30">
+                    <div
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() =>
+                        handleEditStart(expense)
+                      }
+                    >
+                      ${formatNumber(expense.amount)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-full hover:bg-destructive/20 text-destructive"
                         >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="mt-1 bg-secondary/40 p-3 rounded-md">
-                  <p
-                    className={`text-xl font-semibold text-right ${
-                      expense.isPaid
-                        ? 'text-green-500'
-                        : 'text-red-500'
-                    }`}
-                  >
-                    ${expense.amount.toFixed(2)}
-                  </p>
-                </div>
-                <p className="text-sm mt-2">
-                  Added{' '}
-                  {new Date(
-                    expense.date
-                  ).toLocaleDateString()}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-          {expenses.length === 0 && (
-            <div className="text-center p-6 bg-muted rounded-md md:col-span-2 lg:col-span-3">
-              <p className="text-muted-foreground">
-                No monthly expenses added yet.
-              </p>
-              <p className="text-sm mt-2">
-                Add your first expense to start tracking!
-              </p>
-            </div>
-          )}
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            Delete
+                          </span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Are you sure?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete
+                            this expense.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() =>
+                              handleDeleteExpense(
+                                expense.id
+                              )
+                            }
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+              <TableRow className="bg-muted/50">
+                <TableCell className="font-bold border-r border-border/30">
+                  Total
+                </TableCell>
+                <TableCell className="text-right font-bold border-r border-border/30">
+                  ${formatNumber(totalExpenses)}
+                </TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </div>
+
+      <Dialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Expense</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              handleEditSave();
+            }}
+            className="grid gap-4 py-4"
+          >
+            <div className="grid gap-2">
+              <Label htmlFor="edit-description">
+                Description
+              </Label>
+              <Input
+                id="edit-description"
+                value={editingExpense?.description || ''}
+                onChange={e =>
+                  setEditingExpense(prev =>
+                    prev
+                      ? {
+                          ...prev,
+                          description: e.target.value,
+                        }
+                      : null
+                  )
+                }
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-amount">
+                Amount (USD)
+              </Label>
+              <Input
+                id="edit-amount"
+                type="number"
+                step="0.01"
+                value={editingExpense?.amount || ''}
+                onChange={e =>
+                  setEditingExpense(prev =>
+                    prev
+                      ? { ...prev, amount: e.target.value }
+                      : null
+                  )
+                }
+                required
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Save Changes</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

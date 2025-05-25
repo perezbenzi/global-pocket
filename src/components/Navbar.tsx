@@ -24,7 +24,7 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground border-b border-primary-foreground/30 h-16">
         <div className="container h-full max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl flex items-center justify-between px-4">
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4">
             <Link
               to="/"
               className="flex items-center gap-2"
@@ -114,7 +114,7 @@ const Navbar = () => {
           </div>
           <button
             onClick={() => setIsOpen(true)}
-            className="md:hidden ml-auto"
+            className="lg:hidden ml-auto"
           >
             <Menu
               size={24}

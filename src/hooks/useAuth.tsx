@@ -10,6 +10,7 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { migrateLocalDataToFirestore } from '../lib/db';
@@ -27,6 +28,7 @@ interface AuthContextType {
     password: string
   ) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(
@@ -121,12 +123,17 @@ export const AuthProvider: React.FC<{
     await signOut(auth);
   };
 
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
   const value = {
     user,
     loading,
     signIn,
     signUp,
     logout,
+    resetPassword,
   };
 
   return (

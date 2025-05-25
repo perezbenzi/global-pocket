@@ -10,6 +10,8 @@ import {
   writeBatch,
   orderBy,
   limit,
+  addDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import {
@@ -408,3 +410,60 @@ export async function deleteMonthlyExpense(
     )
   );
 }
+
+export const getCryptoHoldings = async (userId: string) => {
+  const holdingsRef = collection(
+    db,
+    'users',
+    userId,
+    'cryptoHoldings'
+  );
+  const snapshot = await getDocs(holdingsRef);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+export const addCryptoHolding = async (
+  userId: string,
+  holding: { symbol: string; amount: number }
+) => {
+  const holdingsRef = collection(
+    db,
+    'users',
+    userId,
+    'cryptoHoldings'
+  );
+  const docRef = await addDoc(holdingsRef, holding);
+  return docRef.id;
+};
+
+export const updateCryptoHolding = async (
+  userId: string,
+  holdingId: string,
+  holding: { symbol: string; amount: number }
+) => {
+  const holdingRef = doc(
+    db,
+    'users',
+    userId,
+    'cryptoHoldings',
+    holdingId
+  );
+  await updateDoc(holdingRef, holding);
+};
+
+export const deleteCryptoHolding = async (
+  userId: string,
+  holdingId: string
+) => {
+  const holdingRef = doc(
+    db,
+    'users',
+    userId,
+    'cryptoHoldings',
+    holdingId
+  );
+  await deleteDoc(holdingRef);
+};
