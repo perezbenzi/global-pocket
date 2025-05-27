@@ -9,6 +9,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from 'react-router-dom';
 import Index from './pages/Index';
 import Transactions from './pages/Transactions';
@@ -18,10 +19,14 @@ import MonthlyExpenses from './pages/MonthlyExpenses';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import RegisterDemo from './pages/RegisterDemo';
 import { AuthProvider } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const queryClient = new QueryClient();
+
+// For testing purposes - will be replaced with import.meta.env.PROD in production
+const isProduction = true;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,7 +39,13 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route
               path="/register"
-              element={<Register />}
+              element={
+                isProduction ? (
+                  <RegisterDemo />
+                ) : (
+                  <Register />
+                )
+              }
             />
             <Route
               path="/"
